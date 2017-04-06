@@ -30,7 +30,7 @@ import javafx.stage.Stage;
 public class Controller extends Pane{
 
 	@FXML private AnchorPane list;
-	@FXML Button createGrid,largeMap,C;
+	@FXML Button createGrid,largeMap,A,B,C;
 	@FXML TextField coordinates;
 	@FXML Label locationResult;
 	
@@ -45,7 +45,7 @@ public class Controller extends Pane{
 	static int sx = 0, sy = 0; //current Cell coordinates
 	
 	public void start(Stage mainStage)
-	{
+	{		
 		createGrid.setOnAction(new EventHandler<ActionEvent>(){
 			@Override
 			public void handle(ActionEvent event){
@@ -61,6 +61,13 @@ public class Controller extends Pane{
 				if(!list.getChildren().isEmpty())
 					flush();
 				createLargeMap(1);
+			}
+		});
+		
+		A.setOnAction(new EventHandler<ActionEvent>(){
+			@Override
+			public void handle(ActionEvent event){
+				defaultGrid();
 			}
 		});
 		
@@ -166,6 +173,86 @@ public class Controller extends Pane{
 		}
 		
 	}
+	public void defaultGrid()
+	{
+		try{
+			grid = new Grid(columns,rows,width,height);
+			
+			int startX = 0,startY = 0;
+			int cellType;
+			boolean blocked = true;
+			Random rand = new Random();
+			
+			Cell cell1 = new Cell(0,0,3,3); //H
+			Cell cell2 = new Cell(1,0,3,3); //H
+			Cell cell3 = new Cell(2,0,2,2); //T
+			Cell cell4 = new Cell(0,1,1,1); //N
+			Cell cell5 = new Cell(1,1,1,1); //N
+			Cell cell6 = new Cell(2,1,1,1); //N
+			Cell cell7 = new Cell(0,2,1,1); //N
+			Cell cell8 = new Cell(1,2,0,0); //B
+			Cell cell9 = new Cell(2,2,3,3); //H
+			
+			grid.add(cell1, 0, 0);
+			grid.add(cell2, 1, 0);
+			grid.add(cell3, 2, 0);
+			grid.add(cell4, 0, 1);
+			grid.add(cell5, 1, 1);
+			grid.add(cell6, 2, 1);
+			grid.add(cell7, 0, 2);
+			grid.add(cell8, 1, 2);
+			grid.add(cell9, 2, 2);
+
+			for(int i = 0;i<grid.cells.length;i++)
+			{
+				for(int j = 0;j<grid.cells.length;j++)
+				{			
+					cellType = grid.getCell(i, j).getType();
+					switch(cellType)
+					{
+						case 0: grid.getCell(i,j).blocked();
+								break;
+						case 1: break;
+						case 2: grid.getCell(i,j).hardToTraverse();
+								break;
+						case 3: grid.getCell(i,j).highway();
+								break;
+					}
+				}	
+			}
+			
+			//Start in a random cell that is not blocked
+			while(blocked)
+			{		
+				startX = rand.nextInt(3);
+				startY = rand.nextInt(3);
+				if(grid.getCell(startX, startY).getType() == 0)
+				{
+					
+				}
+				else
+				{
+					blocked = false;
+				}
+			}
+			accurateSensor(startX,startY);	
+			sx = startX;
+			sy = startY;
+			
+			list.getChildren().addAll(grid);
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		
+	}
+	public void partA()
+	{
+		//actions = right, right, down, down
+		//reading = N	   N	  H		H
+	}
+	
 	public void accurateSensor(int x,int y)
 	{
 		int type = grid.getCell(x, y).getType();
@@ -351,7 +438,8 @@ public class Controller extends Pane{
 	{
 		try{			
 			int startX = 0,startY = 0;
-			int hundred = 100;
+			int rowNum = 100;
+			int colNum = 100;
 			int cellType;
 			int normal = 49;
 			int highway = 69;
@@ -360,19 +448,20 @@ public class Controller extends Pane{
 			boolean blocked = true;
 			Random rand = new Random();
 			
-			grid = new Grid(hundred,hundred,width,height);
-			for(int row = 0;row<hundred;row++)
+			grid = new Grid(colNum,rowNum,width,height);
+			
+			for(int row = 0;row<rowNum;row++)
 			{
-				for(int column = 0;column<hundred;column++)
+				for(int column = 0;column<colNum;column++)
 				{
 					Cell cell = new Cell(column, row);
 					grid.add(cell, column, row);
 				}
 			}
 			
-			for(int i = 0;i<grid.cells.length;i++)
+			for(int i = 0;i<grid.rows;i++)
 			{
-				for(int j = 0;j<grid.cells.length;j++)
+				for(int j = 0;j<grid.columns;j++)
 				{	
 					cellType = rand.nextInt(100);
 					
@@ -428,6 +517,8 @@ public class Controller extends Pane{
 				randomActions(count,mapNum);
 				count++;
 			}
+			IO io = new IO(grid);
+			io.writeMap(mapNum);
 		}
 		catch(Exception e)
 		{
@@ -592,45 +683,8 @@ public class Controller extends Pane{
 			}	
 			count++;
 		}
-		write(initialCoor,coordinate,actionType,sensor,sameMapRunNum,mapNum);
+		IO io = new IO(grid);
+		io.writeGroundTruth(initialCoor,coordinate,actionType,sensor,sameMapRunNum,mapNum);
 	}
-	public void write(String initialCoor, String[] coordinate, String[] actionType, 
-			String[] sensor, int sameMapRunNum, int mapNum)
-	{
-		String str;
-		LinkedList<String> line = new LinkedList<String>();
-		line.add("x0y0:" +initialCoor);
-		
-		for(int i=0;i<coordinate.length;i++)
-		{
-			line.add("x"+(i+1)+"y"+(i+1)+":"+coordinate[i]);
-		}
-		for(int i=0;i<actionType.length;i++)
-		{
-			line.add("a"+(i+1)+":"+actionType[i]);
-		}
-		str = "{";
-		for(int i=0;i<sensor.length-1;i++)
-		{
-			str = str + sensor[i]+ ",";
-		}
-		str = str + sensor[99] + "}";
-		line.add(str);
-		
-		Path file;
-		if(sameMapRunNum%10 == 0 && mapNum == 0)									//10
-			file = Paths.get("GroundTruthData\\GroundTruth" +sameMapRunNum+".txt"); 
-		else if(sameMapRunNum%10 == 0)												//20,30 etc.
-			file = Paths.get("GroundTruthData\\GroundTruth" +mapNum + 0 +".txt"); 
-		else																		//rest
-			file = Paths.get("GroundTruthData\\GroundTruth" + (mapNum-1)+sameMapRunNum+".txt"); 
-		
-		try{
-			Files.write(file, line, Charset.forName("UTF-8"));
-		}
-		catch(IOException e)
-		{
-			e.printStackTrace();
-		}
-	}
+
 }

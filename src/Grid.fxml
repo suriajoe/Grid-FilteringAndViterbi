@@ -13,6 +13,8 @@
       <TextField fx:id="coordinates" layoutX="104.0" layoutY="10.0" prefHeight="25.0" prefWidth="84.0" promptText="Example 1,2" />
       <Label fx:id="locationResult" layoutX="197.0" layoutY="14.0" prefHeight="17.0" prefWidth="100.0" text="Result: " />
       <Button fx:id="largeMap" layoutX="494.0" layoutY="35.0" mnemonicParsing="false" text="Create Large Map" />
-      <Button fx:id="C" layoutX="525.0" layoutY="68.0" mnemonicParsing="false" text="Part C" />
+      <Button fx:id="C" layoutX="130.0" layoutY="48.0" mnemonicParsing="false" text="Part C" />
+      <Button fx:id="A" layoutX="14.0" layoutY="48.0" mnemonicParsing="false" text="Part A" />
+      <Button fx:id="B" layoutX="74.0" layoutY="48.0" mnemonicParsing="false" text="Part B" />
    </children>
 </AnchorPane>
