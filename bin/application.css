@@ -1,0 +1,23 @@
+
+/* JavaFX CSS - Leave this comment until you have at least create one rule which uses -fx-Property */
+.cell {
+    -fx-border-color: grey;
+    -fx-border-width: 1px;
+}
+.cell-hover{
+	-fx-background-color:derive(yellow,0.1);
+}
+
+.cell-normal{
+	/*-fx-text:"N";*/
+}
+
+.cell-blocked{
+	-fx-background-color:derive(black,0.9);
+}
+.cell-highway{
+	-fx-background-color:derive(blue,0.9);
+}
+.cell-hardToTraverse{
+	-fx-background-color:derive(brown,0.9);
+}
