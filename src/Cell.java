@@ -4,8 +4,9 @@ public class Cell extends AnchorPane
 {
 	int column;
 	int row;
-	double value = 1; //blocked = 0, normal = 1, Hard to Traverse = 2, highway = 3
+	double value = 0; //blocked = 0, normal = 1, Hard to Traverse = 2, highway = 3
 	int type = 1; //blocked = 0, normal = 1, Hard to Traverse = 2, highway = 3
+	String reading;
 	
 	
 	public Cell(int column, int row)
@@ -27,6 +28,22 @@ public class Cell extends AnchorPane
      	getStyleClass().add("cell");
      	
      	setOpacity(0.9);
+    }
+    
+    public Cell(int column, int row, double value, int type,String reading)
+    {
+     	this.column = column;
+     	this.row = row;
+     	this.value = value;
+     	this.type = type;
+     	this.reading = reading;
+    }
+    public Cell(int column, int row, int type,String reading)
+    {
+     	this.column = column;
+     	this.row = row;
+     	this.type = type;
+     	this.reading = reading;
     }
 	
     public int getColumn()
@@ -67,6 +84,14 @@ public class Cell extends AnchorPane
     public void setType(int t)
     {
     	this.type = t;
+    }
+    public String getReading()
+    {
+    	return this.reading;
+    }
+    public void setReading(String reading)
+    {
+    	this.reading = reading;
     }
     
     public void normal()

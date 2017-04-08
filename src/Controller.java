@@ -42,6 +42,9 @@ public class Controller extends Pane{
 	double width = 600;
 	double height = 600;
 	Grid grid; 
+	Grid current;
+	Grid previous;
+	Grid next;
 	static int sx = 0, sy = 0; //current Cell coordinates
 	
 	public void start(Stage mainStage)
@@ -67,7 +70,7 @@ public class Controller extends Pane{
 		A.setOnAction(new EventHandler<ActionEvent>(){
 			@Override
 			public void handle(ActionEvent event){
-				defaultGrid();
+				partA();
 			}
 		});
 		
@@ -183,15 +186,15 @@ public class Controller extends Pane{
 			boolean blocked = true;
 			Random rand = new Random();
 			
-			Cell cell1 = new Cell(0,0,3,3); //H
-			Cell cell2 = new Cell(1,0,3,3); //H
-			Cell cell3 = new Cell(2,0,2,2); //T
-			Cell cell4 = new Cell(0,1,1,1); //N
-			Cell cell5 = new Cell(1,1,1,1); //N
-			Cell cell6 = new Cell(2,1,1,1); //N
-			Cell cell7 = new Cell(0,2,1,1); //N
-			Cell cell8 = new Cell(1,2,0,0); //B
-			Cell cell9 = new Cell(2,2,3,3); //H
+			Cell cell1 = new Cell(0,0,3,"H"); //H
+			Cell cell2 = new Cell(1,0,3,"H"); //H
+			Cell cell3 = new Cell(2,0,2,"T"); //T
+			Cell cell4 = new Cell(0,1,1,"N"); //N
+			Cell cell5 = new Cell(1,1,1,"N"); //N
+			Cell cell6 = new Cell(2,1,1,"N"); //N
+			Cell cell7 = new Cell(0,2,1,"N"); //N
+			Cell cell8 = new Cell(1,2,0,"B"); //B
+			Cell cell9 = new Cell(2,2,3,"H"); //H
 			
 			grid.add(cell1, 0, 0);
 			grid.add(cell2, 1, 0);
@@ -211,11 +214,15 @@ public class Controller extends Pane{
 					switch(cellType)
 					{
 						case 0: grid.getCell(i,j).blocked();
+								grid.getCell(i,j).setValue(0);
 								break;
-						case 1: break;
+						case 1: grid.getCell(i,j).setValue(0.125);
+								break;
 						case 2: grid.getCell(i,j).hardToTraverse();
+								grid.getCell(i,j).setValue(0.125);
 								break;
 						case 3: grid.getCell(i,j).highway();
+								grid.getCell(i,j).setValue(0.125);
 								break;
 					}
 				}	
@@ -235,11 +242,12 @@ public class Controller extends Pane{
 					blocked = false;
 				}
 			}
-			accurateSensor(startX,startY);	
+			//accurateSensor(startX,startY);	
 			sx = startX;
 			sy = startY;
 			
 			list.getChildren().addAll(grid);
+			filtering(grid);
 		}
 		catch(Exception e)
 		{
@@ -251,6 +259,15 @@ public class Controller extends Pane{
 	{
 		//actions = right, right, down, down
 		//reading = N	   N	  H		H
+		IO io = new IO(grid);
+
+		for(int i=0;i<4;i++)
+		{
+			if(!list.getChildren().isEmpty())
+				flush();
+			defaultGrid();
+			io.write(grid,i);
+		}
 	}
 	
 	public void accurateSensor(int x,int y)
@@ -687,4 +704,223 @@ public class Controller extends Pane{
 		io.writeGroundTruth(initialCoor,coordinate,actionType,sensor,sameMapRunNum,mapNum);
 	}
 
+	public void filtering(Grid grid)
+	{
+		String[] action = {"Right","Right","Down","Down"};
+		String[] reading = {"N","N","H","H"};
+
+		current = new Grid(columns,rows,width,height);
+		
+		current = grid;
+		for(int i=0;i<action.length;i++)
+		{
+			grid = TransitionModel(action[i],grid);
+			grid = ObservationModel(grid,reading[i]);
+		}
+		
+		for(int i=0;i<grid.rows;i++)
+		{
+			for(int j=0;j<grid.columns;j++)
+			{
+				grid.cells[i][j].reading = current.cells[i][j].reading;
+			}
+		}
+		//print(grid);
+		this.grid = grid;
+	}
+	
+	public void print(Grid next)
+	{
+		for(int i=0;i<next.rows;i++)
+		{
+			for(int j=0;j<next.columns;j++)
+			{
+				System.out.print("["+next.getCell(i, j).getReading() + "] "+ next.getCell(i, j).value);
+			}
+			System.out.println();
+		}
+	}
+	/*
+	public Grid TransitionModel(String action, Grid grid)
+	{
+		//dot product or state vector  
+		switch(action)
+		{
+		case "Right":
+			// Transition from 0, 0
+            next.getCell(0, 0).setValue(next.getCell(0,0).value + grid.getCell(0, 0).value * 0.1);
+            next.getCell(0, 1).setValue(next.getCell(0,1).value + grid.getCell(0, 1).value * 0.9);
+
+            // Transition from 0, 1
+            next.getCell(0, 1).setValue(next.getCell(0,1).value + grid.getCell(0, 1).value * 0.1);
+            next.getCell(0, 2).setValue(next.getCell(0,2).value + grid.getCell(0, 2).value * 0.9);
+
+            // Transition from 0, 2
+            next.getCell(0, 2).setValue(next.getCell(0,2).value + grid.getCell(0, 2).value * 1.0);
+
+            // Transition from 1, 0
+            next.getCell(1, 0).setValue(next.getCell(1,0).value + grid.getCell(1, 0).value * 0.1);
+            next.getCell(1, 1).setValue(next.getCell(1,1).value + grid.getCell(1, 1).value * 0.9);
+
+            // Transition from 1, 1
+            next.getCell(1, 1).setValue(next.getCell(1,1).value + grid.getCell(1, 1).value * 0.1);
+            next.getCell(1, 2).setValue(next.getCell(1,2).value + grid.getCell(1, 2).value * 0.9);
+
+            // Transition from 1, 2
+            next.getCell(1, 2).setValue(next.getCell(1,2).value + grid.getCell(1, 2).value * 1.0);
+
+            // Transition from 2, 1
+            next.getCell(2, 1).setValue(next.getCell(2,1).value + grid.getCell(2, 1).value * 1.0);
+
+            // Transition from 2, 2
+            next.getCell(2, 2).setValue(next.getCell(2,2).value + grid.getCell(2, 2).value * 1.0);
+
+            break;
+		case "Down":
+			//transition from 0,0
+            next.getCell(0, 0).setValue(next.getCell(0,0).value + grid.getCell(0, 0).value * 0.1);
+            next.getCell(1, 0).setValue(next.getCell(1,0).value + grid.getCell(1, 0).value * 0.9);
+
+			//transistion from 0,1
+            next.getCell(0, 0).setValue(next.getCell(0,1).value + grid.getCell(0, 1).value * 0.1);
+            next.getCell(1, 1).setValue(next.getCell(1,1).value + grid.getCell(1, 1).value * 0.9);
+			
+			//transistion from 0,2
+            next.getCell(0, 2).setValue(next.getCell(0,2).value + grid.getCell(0, 2).value * 0.1);
+            next.getCell(1, 1).setValue(next.getCell(1,2).value + grid.getCell(1, 2).value * 0.9);
+			
+			//transistion from 1,0
+            next.getCell(1, 0).setValue(next.getCell(1,0).value + grid.getCell(1,0).value * 0.1);
+            next.getCell(2, 1).setValue(next.getCell(2,0).value + grid.getCell(2,0).value * 0.9);
+			
+			//transistion from 1,1
+            next.getCell(1, 1).setValue(next.getCell(1,1).value + grid.getCell(1, 1).value * 1.0);
+			
+			//transistion from 1,2
+            next.getCell(0, 1).setValue(next.getCell(0,1).value + grid.getCell(0, 1).value * 0.1);
+            next.getCell(1, 1).setValue(next.getCell(1,1).value + grid.getCell(1, 1).value * 0.9);
+
+			//transistion from 2,0
+            next.getCell(2, 0).setValue(next.getCell(2,0).value + grid.getCell(2, 0).value * 1.0);
+			
+			//transistion from 2,2
+            next.getCell(2, 2).setValue(next.getCell(2,2).value + grid.getCell(2, 2).value * 1.0);
+            break;
+		}
+		return next;
+	
+	}
+	*/
+	
+	private Grid TransitionModel(String action, Grid grid)
+    {
+        // Create transition matrix
+		next = new Grid(columns,rows,width,height);
+		for(int row = 0;row<rows;row++)
+		{
+			for(int column = 0;column<columns;column++)
+			{
+				Cell cell = new Cell(column, row);
+				next.add(cell, column, row);
+			}
+		}
+		
+		//sum the states
+        for(int i = 0; i < 3; i++)
+        {
+            for(int j = 0; j < 3; j++)
+            {
+                if (grid.cells[i][j].reading == "B")
+                {
+                	
+                }
+                else
+                {
+                switch(action)
+                {
+                    case "Right":
+                        if (j == 2)
+                        {
+                        	next.cells[i][j].value += grid.cells[i][j].value * 1.0;
+                        }
+                        else if(j+1 < 3 && grid.cells[i][j+1].reading == "B")
+                        {
+                        	next.cells[i][j].value += grid.cells[i][j].value * 1.0;
+                        }
+                        else
+                        {
+                        	next.cells[i][j].value += grid.cells[i][j].value * 0.1;
+                        	next.cells[i][j+1].value += grid.cells[i][j+1].value * 0.9;
+                        }
+                        break;
+                    case "Down":
+                    	if(i == 2)
+                    	{
+                        	next.cells[i][j].value += grid.cells[i][j].value * 1.0;
+                    	}
+                    	else if(i+1<3 && grid.cells[i+1][j].reading == "B")
+                    	{
+                        	next.cells[i][j].value += grid.cells[i][j].value * 1.0;
+                    	}
+                    	else
+                    	{
+                        	next.cells[i][j].value += grid.cells[i][j].value * 0.1;
+                        	next.cells[i+1][j].value += grid.cells[i+1][j].value * 0.9;
+                    	}
+                }
+                }
+            }
+        }
+        return next;
+     }
+	
+	public Grid ObservationModel(Grid curr, String reading)
+	{
+		next = new Grid(columns,rows,width,height);
+		for(int row = 0;row<rows;row++)
+		{
+			for(int column = 0;column<columns;column++)
+			{
+				Cell cell = new Cell(column, row);
+				next.add(cell, column, row);
+			}
+		}
+		
+		for(int i=0;i<3;i++)
+		{
+			for(int j=0;j<3;j++)
+			{
+				if(curr.getCell(i, j).reading == "B") //blocked
+				{
+					continue;
+				}
+				else if(curr.getCell(i, j).reading == reading)
+					next.getCell(i, j).setValue(next.getCell(i,j).value + curr.getCell(i,j).value * 0.9);
+				else
+					next.getCell(i, j).setValue(next.getCell(i,j).value + curr.getCell(i,j).value * 0.05);
+			}
+		}
+		
+		normalize(next);
+		return next;
+	}
+	
+	public void normalize(Grid next)
+	{
+		double total[] = new double[next.rows];
+		for(int i=0;i<3;i++)
+		{
+			for(int j=0;j<3;j++)
+			{
+				total[i] += next.getCell(i, j).value;
+			}
+		}
+		for(int i=0;i<3;i++)
+		{
+			for(int j=0;j<3;j++)
+			{
+				next.cells[i][j].value /= total[i];
+			}
+		}
+	}
 }

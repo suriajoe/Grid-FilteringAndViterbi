@@ -37,6 +37,7 @@ public class Grid extends Pane
         getChildren().add(cell);
 
     }
+    
 
     public Cell getCell(int row, int column) 
     {

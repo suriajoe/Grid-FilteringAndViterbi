@@ -3,6 +3,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.LinkedList;
 
 public class IO {
@@ -77,6 +78,47 @@ public class IO {
 			e.printStackTrace();
 		}
 	}
+	public void writePartAB(LinkedList<String> line,String action,String reading,int testNum,int pairNum)
+	{
+		line.addFirst("Action:"+ action+", Reading: " + reading +"- Probability Pairing");
+		Path file = Paths.get("PartA\\Map"+ testNum + ".txt");
+		
+		try{
+			if(pairNum == 0)
+				Files.write(file, line, Charset.forName("UTF-8"),StandardOpenOption.TRUNCATE_EXISTING);
+			Files.write(file, line, Charset.forName("UTF-8"),StandardOpenOption.APPEND);
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	
+	public void write(Grid next,int testNum)
+	{
+		LinkedList<String> line = new LinkedList<String>();
+		
+		line.add("Final Result");
+		for(int i=0;i<next.rows;i++)
+		{
+			String str = "";
+			for(int j=0;j<next.columns;j++)
+			{
+				str = str + "["+next.getCell(i, j).getReading() + "] "+ next.getCell(i, j).value;
+			}
+			line.add(str);
+		}
+		Path file = Paths.get("PartA\\Map"+ testNum + ".txt");
+		
+		try{
+			Files.write(file, line, Charset.forName("UTF-8"));
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
 	
 	public void readGroundTruth()
 	{
@@ -84,6 +126,6 @@ public class IO {
 	}
 	public void readMap()
 	{
-	
+		
 	}
 }

@@ -1,3 +1,4 @@
+
 public class Viterbi 
 {
 	private static String[] states = {"H","H","T","N","N","N","N","B","H"};
@@ -12,6 +13,5 @@ public class Viterbi
 	//default predictions with no pre-existing data
 	public void defaultPrediction()
 	{
-		
 	}
 }
