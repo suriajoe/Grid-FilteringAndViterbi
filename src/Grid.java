@@ -18,6 +18,15 @@ public class Grid extends Pane
 		
 		cells = new Cell[rows][columns];
 	}
+	public Grid(int columns,int rows)
+	{
+		this.columns = columns;
+		this.rows = rows;
+		this.width = width;
+		this.height = height;
+		
+		cells = new Cell[rows][columns];
+	}
     public void add(Cell cell, int column, int row) 
     {
 

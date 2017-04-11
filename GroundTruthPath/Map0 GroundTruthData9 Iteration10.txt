@@ -1,0 +1,2 @@
+a1-a10: R L U R R R R R D U
+e1-e10: N T H H H H H H N H

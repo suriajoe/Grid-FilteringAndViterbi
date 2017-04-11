@@ -1,0 +1,2 @@
+a1-a100: L U D D U D D L D L D L L U U U D U L L L L L R L L U U L D L D L R L U D D L U L U D D D R U R R R R R D R D D R D R D R L D R D L R D D L R L D L L R D D R L R U R L U D U D L R R R L D L R L R R R
+e1-e100: T H T N H T T H N T N N T T H H H N H H N N N H N N N N N T N T N T N N N H N N H H H T N N N H T N N H T N N N T N N N N H N N N N N N N N N H N N H H H H N H N T T N N N N N T T N T N H N N N N T N

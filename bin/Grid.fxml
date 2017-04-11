@@ -16,5 +16,7 @@
       <Button fx:id="C" layoutX="130.0" layoutY="48.0" mnemonicParsing="false" text="Part C" />
       <Button fx:id="A" layoutX="14.0" layoutY="48.0" mnemonicParsing="false" text="Part A" />
       <Button fx:id="B" layoutX="74.0" layoutY="48.0" mnemonicParsing="false" text="Part B" />
+      <Button fx:id="D" layoutX="188.0" layoutY="48.0" mnemonicParsing="false" text="Part D" />
+      <Button fx:id="E" layoutX="247.0" layoutY="48.0" mnemonicParsing="false" text="Part E" />
    </children>
 </AnchorPane>

@@ -1,0 +1,2 @@
+a1-a50: R D L U U D U L L D D L U L R D R L R U L D L U D D D D U L D L D R U R D L D U U U U D L U L D L D
+e1-e50: N N N N H N N H N N T N N N N N N N N N N T N N N H N N N N N N N N H N H N N N H N T H N N H N H T
