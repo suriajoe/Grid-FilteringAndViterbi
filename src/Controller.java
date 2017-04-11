@@ -835,8 +835,8 @@ public class Controller extends Pane{
 
 		Grid current = new Grid(grid.columns,grid.rows);
 		
-		LinkedList<Grid> stateList = new LinkedList<Grid>();
-		stateList.add(grid);
+		LinkedList<Grid> stateNum = new LinkedList<Grid>();
+		stateNum.add(grid);
 
 		current = grid;
 		printState(grid,current,action[0],reading[0],0);
@@ -844,14 +844,13 @@ public class Controller extends Pane{
 		{
 			Grid condMat = grid;
 			condMat = observationModel(grid,reading[i]);
-			LinkedList<LinkedList<Cell>> ancestors = transitionModel(action[i],condMat);
+			LinkedList<LinkedList<Cell>> pastNodes = transitionModel(action[i],condMat);
 			normalize(condMat);
-			Grid transMat = priorBelief(stateList.get(i),condMat,ancestors);
+			Grid transMat = priorBelief(stateNum.get(i),condMat,pastNodes);
 			normalize(transMat);
-			stateList.add(transMat);
+			stateNum.add(transMat);
 			
-			grid = transMat;
-			printState(grid,current,action[i],reading[i],i);
+			printState(transMat,current,action[i],reading[i],i);
 		}
 		
 		for(int i=0;i<grid.rows;i++)
@@ -934,10 +933,10 @@ public class Controller extends Pane{
         	LinkedList<Cell> rowList = new LinkedList<Cell>();
             for(int j = 0; j < grid.columns; j++)
             {
-                if (grid.cells[i][j].reading == "B")
+                //if (grid.cells[i][j].reading == "B")
                 {         	
                 }
-                else
+                //else
                 {
                 switch(action)
                 {
@@ -1120,27 +1119,27 @@ public class Controller extends Pane{
 	{
 		Grid current = new Grid(grid.columns,grid.rows);
 				
-		LinkedList<Grid> stateList = new LinkedList<Grid>();
-		stateList.add(grid);
+		LinkedList<Grid> stateNum = new LinkedList<Grid>();
+		stateNum.add(grid);
 		current = grid;
 		heatMap(grid,0);
 		for(int i=0;i<action.length;i++)
 		{
 			Grid condMat = grid;
 			condMat = observationModel(grid,reading[i]);
-			LinkedList<LinkedList<Cell>> ancestors = transitionModel(action[i],condMat);
+			LinkedList<LinkedList<Cell>> pastNodes = transitionModel(action[i],condMat);
 			normalize(condMat);
-			Grid transMat = priorBelief(stateList.get(i),condMat,ancestors);
+			Grid transMat = priorBelief(stateNum.get(i),condMat,pastNodes);
 			normalize(transMat);
-			stateList.add(transMat);			
-			grid = transMat;
-			heatMap(grid,i+1);
+			stateNum.add(transMat);			
+			
+			heatMap(transMat,i+1);
 
 			//print out ground truth path
 			if(i == 9 || i == 49 || i == 99){
-				heatMap(grid,i+1);
-				IO io = new IO(grid);
-				io.writeGroundTruthPath(grid,sameMapRunNum,mapNum, i,action,reading);
+				heatMap(transMat,i+1);
+				IO io = new IO(transMat);
+				io.writeGroundTruthPath(transMat,sameMapRunNum,mapNum, i,action,reading);
 			}
 		}
 		
@@ -1157,7 +1156,7 @@ public class Controller extends Pane{
 	
 	public Grid priorBelief(Grid transMat,Grid condMat,LinkedList<LinkedList<Cell>> ancestors)
 	{
-		Grid matrix = transMat;
+		Grid prev = transMat;
 		
 		for(int i = 0; i < transMat.rows; i++)
 		{
@@ -1167,14 +1166,14 @@ public class Controller extends Pane{
 				int idx2 = ancestors.get(i).get(j).getRow();
 				double probability = transMat.cells[idx2][idx1].value  * condMat.cells[idx2][idx1].value;
 				
-				matrix.cells[i][j].parent = transMat.cells[idx2][idx1];
-				matrix.cells[i][j].parentX = j;
-				matrix.cells[i][j].parentY = i;
-				matrix.cells[i][j].value = probability;
+				prev.cells[i][j].parent = transMat.cells[idx2][idx1];
+				prev.cells[i][j].parentX = j;
+				prev.cells[i][j].parentY = i;
+				prev.cells[i][j].value = probability;
 			}
 		}
 		
-		return matrix;
+		return prev;
 	}
 	public void heatMap(Grid grid,int actionNum)
 	{
@@ -1209,8 +1208,8 @@ public class Controller extends Pane{
 	{
 		Grid current = new Grid(grid.columns,grid.rows);
 		
-		LinkedList<Grid> stateList = new LinkedList<Grid>();
-		stateList.add(grid);
+		LinkedList<Grid> stateNum = new LinkedList<Grid>();
+		stateNum.add(grid);
 		current = grid;
 		//heatMap(grid,0);
 		int [] xArray = coor.get(0);
@@ -1222,18 +1221,17 @@ public class Controller extends Pane{
 		{
 			Grid condMat = grid;
 			condMat = observationModel(grid,reading[i]);
-			LinkedList<LinkedList<Cell>> ancestors = transitionModel(action[i],condMat);
+			LinkedList<LinkedList<Cell>> pastNodes = transitionModel(action[i],condMat);
 			normalize(condMat);
-			Grid transMat = priorBelief(stateList.get(i),condMat,ancestors);
+			Grid transMat = priorBelief(stateNum.get(i),condMat,pastNodes);
 			normalize(transMat);
-			stateList.add(transMat);
-			grid = transMat;
+			stateNum.add(transMat);
 			
 			if(i > 4)
 			{
 				trueX = xArray[i];
 				trueY = yArray[i];
-				errorAmount[i-5] = MLE(grid,trueX,trueY);
+				errorAmount[i-5] = MLE(transMat,trueX,trueY);
 			}
 		}
 		
