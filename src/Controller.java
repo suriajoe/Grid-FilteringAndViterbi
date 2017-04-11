@@ -319,7 +319,6 @@ public class Controller extends Pane{
 		
 		//defaultGrid();
 		Viterbi v = new Viterbi(grid);
-		v.fowardViterbi(observations, states, start_probability, transition_probability, emission_probability);
 		//v.viterbi(grid);
 		//io.writeB(grid);
 	}
@@ -349,7 +348,8 @@ public class Controller extends Pane{
 		IO io = new IO();
 		
 		LinkedList<int[]> coordinates = new LinkedList<int[]>();
-		for(int i=0;i<10;i++)
+		LinkedList<double[]> data = new LinkedList<double[]>();
+		for(int i=0;i<1;i++)
 		{
 			for(int j=0;j<10;j++)
 			{
@@ -359,9 +359,26 @@ public class Controller extends Pane{
 				int sameMapNum = j;
 				list = io.readGroundTruth(mapNum+1, sameMapNum+1,coordinates);
 				grid = io.readLargeMap(mapNum+1);
-				filteringMLE(grid,list.get(0),list.get(1),sameMapNum,mapNum,coordinates);
+				data.add(filteringMLE(grid,list.get(0),list.get(1),sameMapNum,mapNum,coordinates));
 			}
 		}
+		System.out.println("MLE passed");
+		float [] avgError = new float[data.get(0).length];
+		//error amount per iteration
+		for(int i=0;i<data.get(0).length;i++)
+		{
+			for(int j=0;j<data.size();j++)
+			{
+				double [] array = data.get(j);
+				avgError[i] = avgError[i] + (float)array[i];
+			}
+		}
+		for(int i=0;i<avgError.length;i++)
+		{
+			avgError[i] = avgError[i]/avgError.length;
+		}
+		LineChart chart = new LineChart();
+		chart.plot(avgError);
 	}
 	
 	public void accurateSensor(int x,int y)
@@ -816,13 +833,24 @@ public class Controller extends Pane{
 		String[] action = {"Right","Right","Down","Down"};
 		String[] reading = {"N","N","H","H"};
 
-		Grid current = new Grid(columns,rows);
+		Grid current = new Grid(grid.columns,grid.rows);
 		
+		LinkedList<Grid> stateList = new LinkedList<Grid>();
+		stateList.add(grid);
+
 		current = grid;
+		printState(grid,current,action[0],reading[0],0);
 		for(int i=0;i<action.length;i++)
 		{
-			grid = transitionModel(action[i],grid);
-			grid = observationModel(grid,reading[i]);
+			Grid condMat = grid;
+			condMat = observationModel(grid,reading[i]);
+			LinkedList<LinkedList<Cell>> ancestors = transitionModel(action[i],condMat);
+			normalize(condMat);
+			Grid transMat = priorBelief(stateList.get(i),condMat,ancestors);
+			normalize(transMat);
+			stateList.add(transMat);
+			
+			grid = transMat;
 			printState(grid,current,action[i],reading[i],i);
 		}
 		
@@ -866,7 +894,25 @@ public class Controller extends Pane{
 		}
 	}
 	
-	private Grid transitionModel(String action, Grid grid)
+	/*
+	public static void Predict(Grid grid)
+	{
+		List<Point> pointList = new List<Point>();
+		double maxProb = 0.0;
+		Point lastPoint = new Point();
+		for(int i=0;i<grid.rows;i++)
+		{
+			for(int j=0; j<grid.columns;j++)
+			{
+				if(maxProb < grid.cells[i][j].value)
+				{
+					maxProb = grid.
+				}
+			}
+		}
+	}
+	*/
+	private LinkedList<LinkedList<Cell>> transitionModel(String action, Grid grid)
     {
         // Create transition matrix
 		next = new Grid(grid.columns,grid.rows);
@@ -879,9 +925,13 @@ public class Controller extends Pane{
 			}
 		}
 		
+		LinkedList<LinkedList<Cell>> prior = new LinkedList<LinkedList<Cell>>();
+		//Grid prior = new Grid(grid.columns,grid.rows);
+		
 		//sum the states
         for(int i = 0; i < grid.rows; i++)
         {
+        	LinkedList<Cell> rowList = new LinkedList<Cell>();
             for(int j = 0; j < grid.columns; j++)
             {
                 if (grid.cells[i][j].reading == "B")
@@ -893,60 +943,132 @@ public class Controller extends Pane{
                 {
                 	case "R":
                     case "Right":
-                        if (j == grid.columns-1)
-                        	next.cells[i][j].value += grid.cells[i][j].value * 1.0;
-                        else if(j+1 < grid.columns && grid.cells[i][j+1].reading == "B")
-                        	next.cells[i][j].value += grid.cells[i][j].value * 1.0;
-                        else
+                        if (j==0)
                         {
-                        	next.cells[i][j].value += grid.cells[i][j].value * 0.1;
-                        	next.cells[i][j+1].value += grid.cells[i][j+1].value * 0.9;
+                        	if(grid.cells[i][j+1].reading == "B")
+                        	{
+                        		rowList.add(new Cell(j,i));
+                        		grid.cells[i][j].value = grid.cells[i][j].value * 0.9;
+                        	}
+                        	else
+                        	{
+                        		rowList.add(new Cell(j,i));
+                        		grid.cells[i][j].value = grid.cells[i][j].value * 0.1;
+                        	}
+                        }
+                        if (j <= grid.columns-1 && j > 0)
+                        {
+                        	if(grid.cells[i][j-1].reading == "B")
+                        	{
+                        		rowList.add(new Cell(j,1));
+                        		grid.cells[i][j].value = grid.cells[i][j].value * 0.1;
+                        	}
+                        	else
+                        	{
+                        		rowList.add(new Cell(j-1,i));
+                        		grid.cells[i][j].value = grid.cells[i][j].value * 0.9;
+                        	}
                         }
                         break;
                     case "L":
                     case "Left":
-                    	if(j == 0)
-                        	next.cells[i][j].value += grid.cells[i][j].value * 1.0;
-                    	else if(j-1> 0 && grid.cells[i][j-1].reading == "B")
-                        	next.cells[i][j].value += grid.cells[i][j].value * 1.0;
-                    	else
-                    	{
-                    		next.cells[i][j].value += grid.cells[i][j].value * 0.1;
-                    		next.cells[i][j-1].value += grid.cells[i][j-1].value * 0.9;
-                    	}
-                    	break;
+                        if (j==grid.columns-1)
+                        {
+                        	if(grid.cells[i][j-1].reading == "B")
+                        	{
+                        		rowList.add(new Cell(j,i));
+                        		grid.cells[i][j].value = grid.cells[i][j].value * 0.9;
+                        	}
+                        	else
+                        	{
+                        		rowList.add(new Cell(j,i));
+                        		grid.cells[i][j].value = grid.cells[i][j].value * 0.1;
+                        	}
+                        }
+                        if (j < grid.columns-1 && j>= 0)
+                        {
+                        	if(grid.cells[i][j+1].reading == "B")
+                        	{
+                        		rowList.add(new Cell(j,i));
+                        		grid.cells[i][j].value = grid.cells[i][j].value * 0.1;
+                        	}
+                        	else
+                        	{
+                        		rowList.add(new Cell(j+1,i));
+                        		grid.cells[i][j].value = grid.cells[i][j].value * 0.9;
+                        	}
+                        }
+                        break;
                     case "D":
                     case "Down":
-                    	if(i == grid.rows-1)
-                        	next.cells[i][j].value += grid.cells[i][j].value * 1.0;
-                    	else if(i+1<grid.rows && grid.cells[i+1][j].reading == "B")
-                        	next.cells[i][j].value += grid.cells[i][j].value * 1.0;
-                    	else
-                    	{
-                        	next.cells[i][j].value += grid.cells[i][j].value * 0.1;
-                        	next.cells[i+1][j].value += grid.cells[i+1][j].value * 0.9;
-                    	}
+                        if (i==0)
+                        {
+                        	if(grid.cells[i+1][j].reading == "B")
+                        	{
+                        		rowList.add(new Cell(j,i));
+                        		grid.cells[i][j].value = grid.cells[i][j].value * 0.9;
+                        	}
+                        	else
+                        	{
+                        		rowList.add(new Cell(j,i));
+                        		grid.cells[i][j].value = grid.cells[i][j].value * 0.1;
+                        	}
+                        }
+                        if (i>0 && i<=grid.rows-1)
+                        {
+                        	if(grid.cells[i-1][j].reading == "B")
+                        	{
+                        		rowList.add(new Cell(j,i));
+                        		grid.cells[i][j].value = grid.cells[i][j].value * 0.1;
+                        	}
+                        	else
+                        	{
+                        		rowList.add(new Cell(j,i-1));
+                        		grid.cells[i][j].value = grid.cells[i][j].value * 0.9;
+                        	}
+                        }
                     	break;
                     case "U":
                     case "UP":
-                    	if(i == 0)
-                    		next.cells[i][j].value += grid.cells[i][j].value * 1.0;
-                    	else if(i-1>0 && grid.cells[i-1][j].reading == "B")
-                    		next.cells[i][j].value += grid.cells[i][j].value * 1.0;
-                    	else
-                    	{
-                    		next.cells[i][j].value += grid.cells[i][j].value * 0.1;
-                    		next.cells[i-1][j].value += grid.cells[i-1][j].value * 0.9;
-                    	}
-                }
-                }
-            }
+                        if (i == grid.rows-1)
+                        {
+                        	if(grid.cells[i-1][j].reading == "B")
+                        	{
+                        		rowList.add(new Cell(j,i));
+                        		grid.cells[i][j].value = grid.cells[i][j].value * 0.9;
+                        	}
+                        	else
+                        	{
+                        		rowList.add(new Cell(j,i));
+                        		grid.cells[i][j].value = grid.cells[i][j].value * 0.1;
+                        	}
+                        }
+                        if (i>=0 && i < grid.rows-1)
+                        {
+                        	if(grid.cells[i+1][j].reading == "B")
+                        	{
+                        		rowList.add(new Cell(j,i));
+                        		grid.cells[i][j].value = grid.cells[i][j].value * 0.1;
+                        	}
+                        	else
+                        	{
+                        		rowList.add(new Cell(j,i+1));
+                        		grid.cells[i][j].value = grid.cells[i][j].value * 0.9;
+                        	}
+                        }
+                        break;
+                  }
+                }//else
+            }//inner loop
+            prior.add(rowList);
         }
-        return next;
+		//normalize(next);
+        return prior;
      }
 	
 	public Grid observationModel(Grid curr, String reading)
 	{
+		//create observation matrix
 		next = new Grid(curr.columns,curr.rows);
 		for(int row = 0;row<curr.rows;row++)
 		{
@@ -968,11 +1090,10 @@ public class Controller extends Pane{
 				else if(curr.getCell(i, j).reading == reading)
 					next.getCell(i, j).setValue(next.getCell(i,j).value + curr.getCell(i,j).value * 0.9);
 				else
-					next.getCell(i, j).setValue(next.getCell(i,j).value + curr.getCell(i,j).value * 0.05);
+					next.getCell(i, j).setValue(next.getCell(i,j).value + curr.getCell(i,j).value * 0.10);
 			}
 		}
 		
-		normalize(next);
 		return next;
 	}
 	
@@ -997,15 +1118,24 @@ public class Controller extends Pane{
 	
 	public void filteringLarge(Grid grid,String[] action,String[] reading,int sameMapRunNum, int mapNum)
 	{
-		Grid current = new Grid(columns,rows);
-		
+		Grid current = new Grid(grid.columns,grid.rows);
+				
+		LinkedList<Grid> stateList = new LinkedList<Grid>();
+		stateList.add(grid);
 		current = grid;
 		heatMap(grid,0);
 		for(int i=0;i<action.length;i++)
 		{
-			grid = transitionModel(action[i],grid);
-			grid = observationModel(grid,reading[i]);
-			
+			Grid condMat = grid;
+			condMat = observationModel(grid,reading[i]);
+			LinkedList<LinkedList<Cell>> ancestors = transitionModel(action[i],condMat);
+			normalize(condMat);
+			Grid transMat = priorBelief(stateList.get(i),condMat,ancestors);
+			normalize(transMat);
+			stateList.add(transMat);			
+			grid = transMat;
+			heatMap(grid,i+1);
+
 			//print out ground truth path
 			if(i == 9 || i == 49 || i == 99){
 				heatMap(grid,i+1);
@@ -1022,7 +1152,29 @@ public class Controller extends Pane{
 			}
 		}
 		//print(grid);
-		this.grid = grid;
+		//this.grid = grid;
+	}
+	
+	public Grid priorBelief(Grid transMat,Grid condMat,LinkedList<LinkedList<Cell>> ancestors)
+	{
+		Grid matrix = transMat;
+		
+		for(int i = 0; i < transMat.rows; i++)
+		{
+			for(int j = 0; j < transMat.columns; j++)
+			{
+				int idx1 = ancestors.get(i).get(j).getColumn();
+				int idx2 = ancestors.get(i).get(j).getRow();
+				double probability = transMat.cells[idx2][idx1].value  * condMat.cells[idx2][idx1].value;
+				
+				matrix.cells[i][j].parent = transMat.cells[idx2][idx1];
+				matrix.cells[i][j].parentX = j;
+				matrix.cells[i][j].parentY = i;
+				matrix.cells[i][j].value = probability;
+			}
+		}
+		
+		return matrix;
 	}
 	public void heatMap(Grid grid,int actionNum)
 	{
@@ -1037,16 +1189,12 @@ public class Controller extends Pane{
 		}
 		HeatChart map = new HeatChart(data);
 		
-		//double xOffset = 1.0;
-		//double yOffset = 0.0;
-		//double xInterval = 1.0;
-		//double yInterval = 2.0;
-		//map.setXValues(xOffset, xInterval);
-		//map.setYValues(yOffset, yInterval);
-		
-		map.setTitle("Action Number " + actionNum);
+		map.setTitle("HeatMap with Action Number " + actionNum);
 		map.setXAxisLabel("X Axis");
 		map.setYAxisLabel("Y Axis");
+		//map.setLowValueColour(Color.WHITE);
+		//map.setHighValueColour(Color.GREEN);
+		
 		//System.out.println(map.max(data) + " " + map.min(data));
 		try{
 			map.saveToFile(new File("HeatMap\\heatMap" + actionNum +".png"));
@@ -1056,38 +1204,44 @@ public class Controller extends Pane{
 			i.printStackTrace();
 		}
 	}
-	public void filteringMLE(Grid grid,String[] action,String[] reading,int sameMapRunNum, 
+	public double[] filteringMLE(Grid grid,String[] action,String[] reading,int sameMapRunNum, 
 							 int mapNum, LinkedList<int []> coor)
 	{
-		Grid current = new Grid(columns,rows);
+		Grid current = new Grid(grid.columns,grid.rows);
 		
+		LinkedList<Grid> stateList = new LinkedList<Grid>();
+		stateList.add(grid);
 		current = grid;
-		heatMap(grid,0);
+		//heatMap(grid,0);
 		int [] xArray = coor.get(0);
 		int [] yArray = coor.get(1);
-		int trueX = xArray[0];
+		int trueX = xArray[0];			//first element in array has initial coor
 		int trueY = yArray[0];
 		double errorAmount[] = new double[95];
 		for(int i=0;i<action.length;i++)
 		{
-			grid = transitionModel(action[i],grid);
-			grid = observationModel(grid,reading[i]);
+			Grid condMat = grid;
+			condMat = observationModel(grid,reading[i]);
+			LinkedList<LinkedList<Cell>> ancestors = transitionModel(action[i],condMat);
+			normalize(condMat);
+			Grid transMat = priorBelief(stateList.get(i),condMat,ancestors);
+			normalize(transMat);
+			stateList.add(transMat);
+			grid = transMat;
 			
 			if(i > 4)
 			{
-				errorAmount[i] = MLE(grid,trueX,trueY);
+				trueX = xArray[i];
+				trueY = yArray[i];
+				errorAmount[i-5] = MLE(grid,trueX,trueY);
 			}
 		}
 		
-		for(int i=0;i<grid.rows;i++)
-		{
-			for(int j=0;j<grid.columns;j++)
-			{
-				grid.cells[i][j].reading = current.cells[i][j].reading;
-			}
-		}
+		//LineChart chart = new LineChart();
+		//chart.plot(errorAmount);
 		//print(grid);
-		this.grid = grid;
+		//this.grid = grid;
+		return errorAmount;
 	}
 	
 	public double MLE(Grid grid, int trueX, int trueY)
@@ -1095,6 +1249,7 @@ public class Controller extends Pane{
 		double mle = grid.cells[0][0].value;
 		int mleX = 0;
 		int mleY = 0;
+		//loop to find largest prob
 		for(int i=0;i<grid.rows;i++)
 		{
 			for(int j=0;j<grid.columns;j++)
@@ -1102,8 +1257,8 @@ public class Controller extends Pane{
 				if(grid.cells[i][j].value > mle)
 				{
 					mle = grid.cells[i][j].value;
-					mleX = i+1;
-					mleY = j+1;
+					mleX = i;
+					mleY = j;
 				}
 			}
 		}
@@ -1113,6 +1268,11 @@ public class Controller extends Pane{
 		euclidean = Math.sqrt(Math.pow(eucx, 2)+Math.pow(eucy, 2));	
 		
 		return euclidean;
+	}
+	
+	public double averageProb()
+	{
+		return 0;
 	}
 	
 }

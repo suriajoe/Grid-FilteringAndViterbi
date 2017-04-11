@@ -7,15 +7,14 @@ public class Cell extends AnchorPane
 	double value = 0; //blocked = 0, normal = 1, Hard to Traverse = 2, highway = 3
 	int type = 1; //blocked = 0, normal = 1, Hard to Traverse = 2, highway = 3
 	String reading;
-	
+	Cell parent;
+	int parentX;
+	int parentY;
 	
 	public Cell(int column, int row)
 	{
 		this.column = column;
 		this.row = row;
-		getStyleClass().add("cell");
-		
-		setOpacity(0.9);
 	}
 	
     public Cell(int column, int row, double value, int type)

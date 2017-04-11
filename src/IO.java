@@ -120,6 +120,7 @@ public class IO {
 				}
 				list.add(actions);
 				list.add(reading);
+				coor.clear();
 				coor.add(x);
 				coor.add(y);
 			}
