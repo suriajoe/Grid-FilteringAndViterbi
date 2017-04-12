@@ -258,14 +258,17 @@ public class IO {
 			i.printStackTrace();
 		}
 	}
-	public void writePartA(LinkedList<String> line,String action,String reading,int pairNum)
+	public void writePartA(LinkedList<String> line,String action,String reading,int pairNum,boolean initial)
 	{
 		line.addFirst("Action:"+ action+", Reading: " + reading +" -Probability Pairing");
 		Path file = Paths.get("PartA\\Map" + ".txt");
 		
 		try{
-			if(pairNum == 0)
+			if(initial)
+			{
+				line.addFirst("InitialState");
 				Files.write(file, line, Charset.forName("UTF-8"));
+			}
 			else if(pairNum == 3)
 			{
 				line.clear();

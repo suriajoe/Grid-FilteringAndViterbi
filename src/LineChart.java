@@ -21,7 +21,7 @@ public class LineChart {
 		float [][] data = new float[2][errorAmount.length];
 		for(int i=0;i<errorAmount.length;i++)
 		{
-			data[0][i] = i;
+			data[0][i] = i+5;
 			data[1][i] = (float) errorAmount[i];
 		}
 		
@@ -31,7 +31,7 @@ public class LineChart {
 		
         final NumberAxis domainAxis = new NumberAxis("Number of Iterations");
         domainAxis.setAutoRangeIncludesZero(false);
-        final NumberAxis rangeAxis = new NumberAxis("Error Number");
+        final NumberAxis rangeAxis = new NumberAxis("Average Error Amount");
         rangeAxis.setAutoRangeIncludesZero(true);
         final FastScatterPlot plot = new FastScatterPlot(data, domainAxis, rangeAxis);
         JFreeChart scatter = new JFreeChart("Average Error Amount", plot);
@@ -42,7 +42,39 @@ public class LineChart {
 		int width = 800;
 		int height = 800;
 		try{
-		File lineChart = new File("ErrorGraph\\Chart.jpeg");
+		File lineChart = new File("ErrorGraph\\ErrorAvg.jpeg");
+	    ChartUtilities.saveChartAsJPEG(lineChart ,scatter, width ,height);
+		}
+		catch(IOException i)
+		{
+			i.printStackTrace();
+		}
+
+	}
+	
+	public void plotProbAvg(float [] errorAmount)
+	{		
+		float [][] data = new float[2][errorAmount.length];
+		for(int i=0;i<errorAmount.length;i++)
+		{
+			data[0][i] = i;
+			data[1][i] = (float) errorAmount[i];
+		}
+		
+        final NumberAxis domainAxis = new NumberAxis("Number of Iterations");
+        domainAxis.setAutoRangeIncludesZero(false);
+        final NumberAxis rangeAxis = new NumberAxis("Average Probability");
+        rangeAxis.setAutoRangeIncludesZero(true);
+        final FastScatterPlot plot = new FastScatterPlot(data, domainAxis, rangeAxis);
+        JFreeChart scatter = new JFreeChart("Average Probability", plot);
+		
+        //scatter.getRenderingHints().put
+        //(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
+		int width = 800;
+		int height = 800;
+		try{
+		File lineChart = new File("ErrorGraph\\ProbAvg.jpeg");
 	    ChartUtilities.saveChartAsJPEG(lineChart ,scatter, width ,height);
 		}
 		catch(IOException i)

@@ -1,2 +1,2 @@
-a1-a100: R D U U U D U L U L U U U R U R U D L U L U D L L D D L U U D L U L D U L L R R D L L L D D R R R L R L U D L D D D D D U L R D R L R D U L R L U D U R R U L L R U R D L U D L U L U R U R R L D D L L
-e1-e100: N H N T H T H N N N T T T H N N N H N H T N N N N N N N N N N T T T H T T N T T T T T N N N H T H H H N N N N N T T N T N T N T N T T H N T N N H N H N N T H N H H N N H N N N T N T N N T H N N N T T
+a1-a100: L R R U U U U D D L U D R L R R L R D U U U U D L D U R R L D D D U R R L R U L D L U R L U R L D D U R R L L L L D L U U D R U D D L L D U L U D R L D L U U R L R R L D R U D L D D D U U U D U D L L
+e1-e100: T H N N T N N N T T N N N H H H H H N H N N N N N T N N T T H N N N N H N N T H N N H H H T N T H N H H T H H H T N H T H N H N T N N H N H T H T H T T N N H N H N N T N H N N T T T N T N T T N T N N

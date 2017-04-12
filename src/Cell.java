@@ -2,8 +2,8 @@ import javafx.scene.layout.AnchorPane;
 
 public class Cell extends AnchorPane
 {
-	int column;
-	int row;
+	int column; //y
+	int row;    //x
 	double value = 0; //blocked = 0, normal = 1, Hard to Traverse = 2, highway = 3
 	int type = 1; //blocked = 0, normal = 1, Hard to Traverse = 2, highway = 3
 	String reading;
